@@ -20,7 +20,8 @@
     body {
       background-color: var(--dark); color: var(--text);
       background-image: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.9)), url('cavaleiro.png');
-      background-size: cover;
+      background-size: contain;
+      background-repeat: no-repeat;
       background-position: center;
       background-attachment: fixed;
       font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden;
@@ -118,7 +119,7 @@
 <body>
 
   <header>
-    <div class="logo">ViDi</div>
+    <div class="logo"><img src="vidi_logo.png" alt="ViDi" style="height: 35px; object-fit: contain; vertical-align: middle;"></div>
     <div class="progress-wrap">
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <div class="progress-text" id="progressText">0%</div>
