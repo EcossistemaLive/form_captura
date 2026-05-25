@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Diagnóstico Estratégico | ViDi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dark: #0A0A0A;
+      --gold: #C9A84C;
+      --gold-light: #E8D08A;
+      --gold-dim: rgba(201,168,76,0.15);
+      --text: #F5F0E8;
+      --text-muted: #ABABAB;
+      --accent: #7B6EF6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: var(--dark); color: var(--text);
+      background-image: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.9)), url('cavaleiro.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    
+    /* ── HEADER ── */
+    header {
+      padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 10;
+    }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--gold); letter-spacing: 0.1em; }
+    .progress-wrap { display: flex; align-items: center; gap: 1rem; }
+    .progress-text { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+    .progress-bar { width: 150px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.3s ease; }
+
+    /* ── CONTAINER ── */
+    #app {
+      flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow-y: auto; padding: 2rem 1rem;
+    }
+
+    /* ── STEPS ── */
+    .step-container {
+      width: 100%; max-width: 650px; opacity: 0; transform: translateY(20px); transition: all 0.5s ease;
+      position: absolute; pointer-events: none; visibility: hidden; display: flex; flex-direction: column; gap: 2rem;
+    }
+    .step-container.active {
+      opacity: 1; transform: translateY(0); pointer-events: auto; visibility: visible; position: relative;
+    }
+    
+    .question-block {
+      font-size: clamp(1.2rem, 3vw, 1.8rem); font-weight: 500; line-height: 1.4; color: var(--text);
+    }
+    .question-block span.q-num {
+      color: var(--gold); font-weight: 700; margin-right: 0.5rem; font-size: 1rem; vertical-align: middle;
+    }
+
+    /* ── OPTIONS ── */
+    .options-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+    .option-btn {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+      padding: 1.25rem 1.5rem; font-size: 1rem; color: var(--text); text-align: left;
+      cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 1rem;
+    }
+    .option-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(201,168,76,0.3); }
+    .option-btn.selected { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); font-weight: 500; }
+    .option-letter { 
+      background: rgba(255,255,255,0.1); width: 24px; height: 24px; border-radius: 4px; 
+      display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;
+    }
+    .option-btn.selected .option-letter { background: var(--gold); color: var(--dark); }
+
+    /* ── INPUTS ── */
+    .input-wrap { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+    input[type="text"], input[type="email"], input[type="tel"], textarea {
+      background: transparent; border: none; border-bottom: 2px solid rgba(255,255,255,0.2);
+      color: var(--gold-light); font-size: 1.5rem; padding: 0.5rem 0; width: 100%; outline: none; transition: border-color 0.3s;
+      font-family: 'Inter', sans-serif;
+    }
+    textarea { font-size: 1.2rem; resize: none; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 1rem; background: rgba(255,255,255,0.02); min-height: 120px; }
+    input:focus, textarea:focus { border-color: var(--gold); }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.15); }
+
+    /* ── NAV BUTTONS ── */
+    .nav-buttons { display: flex; gap: 1rem; margin-top: 2rem; align-items: center; }
+    .btn-next, .btn-submit {
+      background: var(--gold); color: var(--dark); border: none; padding: 1rem 2rem; border-radius: 6px;
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-next:hover, .btn-submit:hover { opacity: 0.9; }
+    .btn-next:disabled, .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .nav-hint { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
+    
+    .btn-prev {
+      background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem;
+      padding: 0.5rem; transition: color 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .btn-prev:hover { color: var(--text); }
+    
+    /* ── THANK YOU ── */
+    .thank-you { text-align: center; }
+    .thank-you h2 { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: var(--gold); margin-bottom: 1rem; }
+    .thank-you p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem; }
+
+    @media (max-width: 768px) {
+      .question-block { font-size: 1.2rem; }
+      .option-btn { font-size: 0.95rem; padding: 1rem 1.25rem; }
+      header { padding: 1rem; }
+      .progress-bar { width: 100px; }
+      input[type="text"], input[type="email"], input[type="tel"] { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">ViDi</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">0%</div>
+    </div>
+  </header>
+
+  <div id="app">
+    <!-- Pasos serão gerados dinamicamente via JS -->
+  </div>
+
+  <script>
+    // Configuração do Webhook (Google Apps Script, Make, Zapier, etc)
+    const WEBHOOK_URL = "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI"; 
+
+    const questions = [
+      {
+        id: "papel", type: "choice", title: "Qual é o seu papel hoje na empresa?",
+        options: ["CEO / Sócio principal", "Diretor(a) / C-level", "Gerente / Coordenador(a)", "Outro"]
+      },
+      {
+        id: "decisoes", type: "choice", title: "Você participa diretamente das decisões estratégicas de médio e longo prazo?",
+        options: ["Sim, sou um dos principais responsáveis", "Participo, mas não sou a palavra final", "Quase não participo"]
+      },
+      {
+        id: "foco_busca", type: "choice", title: "Você está buscando algo para:",
+        options: ["Você, como líder", "Seu time de liderança", "A empresa como um todo"]
+      },
+      {
+        id: "faturamento", type: "choice", title: "Qual foi o faturamento anual aproximado da empresa no último ano?",
+        options: ["Até R$ 5 milhões", "Entre R$ 5M e R$ 10M", "Entre R$ 10M e R$ 50M", "Acima de R$ 50M", "Prefiro não dizer"]
+      },
+      {
+        id: "liderados", type: "choice", title: "Quantas pessoas estão sob sua liderança direta ou indireta?",
+        options: ["Até 5", "De 6 a 20", "De 21 a 100", "Mais de 100"]
+      },
+      {
+        id: "gargalo", type: "choice", title: "Se você tivesse que nomear o principal gargalo hoje, qual alternativa está mais perto da verdade?",
+        options: [
+          "A empresa depende demais de mim em quase tudo",
+          "Meu time não sustenta pressão/crise sem mim",
+          "Falta método para decidir o que fazer nos próximos 12-24 meses",
+          "Processos e operação não acompanham o crescimento",
+          "Conflitos societários / desalinhamento no topo",
+          "Outro"
+        ]
+      },
+      {
+        id: "situacao_atual", type: "choice", title: "Qual dessas frases descreve melhor o seu momento atual na empresa?",
+        options: [
+          "Sei que preciso sair da operação, mas não sei por onde começar",
+          "Preciso que meus líderes cresçam para a empresa escalar",
+          "Quero revisitar a estratégia para o próximo ciclo (expansão, exit...)",
+          "Preciso colocar ordem na casa: processos, metas, times",
+          "Ainda não tenho clareza suficiente nem para responder isso"
+        ]
+      },
+      {
+        id: "marco", type: "choice", title: "Existe algum marco concreto à frente que aumenta a pressão sobre essas decisões?",
+        options: [
+          "Possível venda da empresa / entrada de investidor",
+          "Entrada de novo sócio / sucessão familiar",
+          "Expansão para novas unidades / regiões / países",
+          "Reestruturação (cortes, fusão, reorganização interna)",
+          "Não há marco específico, mas a estagnação incomoda"
+        ]
+      },
+      {
+        id: "reconhecimento", type: "choice", title: "Qual dessas alternativas é o maior obstáculo atual?",
+        options: [
+          "Tenho clareza do problema, mas não consigo executar sozinho",
+          "Não enxergo com nitidez qual é o problema central",
+          "Enxergo o problema, mas o time não acompanha"
+        ]
+      },
+      {
+        id: "tempo", type: "choice", title: "Quanto tempo você está disposto a dedicar para alcançar a solução nas próximas 8 semanas?",
+        options: [
+          "1 dia inteiro, presencial, fora da rotina",
+          "Encontros periódicos, online ou híbridos",
+          "Algumas horas por semana, contanto que seja direto ao ponto",
+          "Ainda não sei, preciso entender melhor o que faz sentido"
+        ]
+      },
+      {
+        id: "ambiente", type: "choice", title: "Que tipo de ambiente tende a gerar mais resultado para você?",
+        options: [
+          "Uma sala com pares (outros CEOs/Diretores em nível semelhante)",
+          "Trabalho direto, 1:1, com quem já resolveu o que eu vivo hoje",
+          "Uma formação estruturada para eu desenvolver meu time de liderança"
+        ]
+      },
+      {
+        id: "foco_90_dias", type: "text_long", title: "Se você pudesse resolver apenas uma coisa nos próximos 90 dias, que mudaria o jogo para os próximos 3 anos, o que seria?",
+        placeholder: "Ex: Tirar minha operação do caos logístico..."
+      },
+      {
+        id: "contato", type: "contact", title: "Para finalizar, onde podemos enviar o resultado do seu diagnóstico?",
+        inputs: [
+          { name: "nome", type: "text", placeholder: "Seu nome completo" },
+          { name: "email", type: "email", placeholder: "Seu melhor e-mail" },
+          { name: "whatsapp", type: "tel", placeholder: "Seu WhatsApp" }
+        ]
+      }
+    ];
+
+    let currentStep = 0;
+    const answers = {};
+    const app = document.getElementById('app');
+
+    function renderSteps() {
+      app.innerHTML = '';
+      
+      questions.forEach((q, index) => {
+        const stepDiv = document.createElement('div');
+        stepDiv.className = `step-container ${index === 0 ? 'active' : ''}`;
+        stepDiv.id = `step-${index}`;
+
+        let contentHTML = `<div class="question-block"><span class="q-num">${index + 1} &rarr;</span> ${q.title}</div>`;
+
+        if (q.type === 'choice') {
+          contentHTML += `<div class="options-grid">`;
+          q.options.forEach((opt, i) => {
+            const letter = String.fromCharCode(65 + i);
+            contentHTML += `<button class="option-btn" onclick="selectOption(${index}, '${opt}')" id="btn-${index}-${i}">
+                              <div class="option-letter">${letter}</div>
+                              <div>${opt}</div>
+                            </button>`;
+          });
+          contentHTML += `</div>`;
+        } else if (q.type === 'text_long') {
+          contentHTML += `<div class="input-wrap">
+                            <textarea id="input-${index}" placeholder="${q.placeholder}" oninput="checkInput(${index})"></textarea>
+                          </div>`;
+        } else if (q.type === 'contact') {
+          contentHTML += `<div class="input-wrap">`;
+          q.inputs.forEach(inp => {
+            contentHTML += `<input type="${inp.type}" id="input-${index}-${inp.name}" placeholder="${inp.placeholder}" oninput="checkInput(${index})">`;
+          });
+          contentHTML += `</div>`;
+        }
+
+        // Navigation
+        contentHTML += `<div class="nav-buttons">`;
+        if (index === questions.length - 1) {
+          contentHTML += `<button class="btn-submit" id="next-${index}" disabled onclick="submitForm()">Finalizar Diagnóstico ✓</button>`;
+        } else {
+          contentHTML += `<button class="btn-next" id="next-${index}" disabled onclick="nextStep()">OK ✓</button>`;
+          contentHTML += `<div class="nav-hint">Pressione Enter ↵</div>`;
+        }
+        if (index > 0) {
+          contentHTML += `<button class="btn-prev" onclick="prevStep()">↑ Voltar</button>`;
+        }
+        contentHTML += `</div>`;
+
+        stepDiv.innerHTML = contentHTML;
+        app.appendChild(stepDiv);
+      });
+      
+      // Thank you step
+      const tyDiv = document.createElement('div');
+      tyDiv.className = `step-container`;
+      tyDiv.id = `step-thankyou`;
+      tyDiv.innerHTML = `
+        <div class="thank-you">
+          <h2>Tudo pronto!</h2>
+          <p>Seus dados foram recebidos. Nossa equipe estratégica vai analisar o seu perfil e entraremos em contato em breve com o diagnóstico.</p>
+          <a href="#" onclick="location.reload(); return false;" class="btn-next" style="text-decoration:none;">Voltar para o início</a>
+        </div>
+      `;
+      app.appendChild(tyDiv);
+
+      updateProgress();
+    }
+
+    function selectOption(stepIndex, value) {
+      const stepDiv = document.getElementById(`step-${stepIndex}`);
+      const buttons = stepDiv.querySelectorAll('.option-btn');
+      buttons.forEach(b => b.classList.remove('selected'));
+      
+      event.currentTarget.classList.add('selected');
+      
+      answers[questions[stepIndex].id] = value;
+      document.getElementById(`next-${stepIndex}`).disabled = false;
+      
+      setTimeout(() => nextStep(), 400);
+    }
+
+    function checkInput(stepIndex) {
+      const q = questions[stepIndex];
+      let valid = true;
+      
+      if (q.type === 'text_long') {
+        const val = document.getElementById(`input-${stepIndex}`).value;
+        if (!val.trim()) valid = false;
+        else answers[q.id] = val;
+      } else if (q.type === 'contact') {
+        q.inputs.forEach(inp => {
+          const val = document.getElementById(`input-${stepIndex}-${inp.name}`).value;
+          if (!val.trim()) valid = false;
+          else answers[inp.name] = val; 
+        });
+      }
+
+      document.getElementById(`next-${stepIndex}`).disabled = !valid;
+    }
+
+    function nextStep() {
+      if (currentStep >= questions.length - 1) return;
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      currentStep++;
+      document.getElementById(`step-${currentStep}`).classList.add('active');
+      updateProgress();
+      
+      const firstInput = document.querySelector(`#step-${currentStep} input, #step-${currentStep} textarea`);
+      if(firstInput) firstInput.focus();
+    }
+
+    function prevStep() {
+      if (currentStep <= 0) return;
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      currentStep--;
+      document.getElementById(`step-${currentStep}`).classList.add('active');
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const pct = Math.round((currentStep / questions.length) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').innerText = pct + '%';
+    }
+
+    async function submitForm() {
+      document.getElementById(`next-${currentStep}`).innerText = "Enviando...";
+      document.getElementById(`next-${currentStep}`).disabled = true;
+
+      answers['data_envio'] = new Date().toISOString();
+
+      try {
+        if (WEBHOOK_URL !== "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI") {
+          await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(answers)
+          });
+        } else {
+          console.log("Modo Sandbox - Respostas:", answers);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        document.getElementById('step-thankyou').classList.add('active');
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('progressText').innerText = '100%';
+
+      } catch (error) {
+        console.error("Erro ao enviar:", error);
+        alert("Ocorreu um erro ao enviar. Tente novamente.");
+        document.getElementById(`next-${currentStep}`).innerText = "Finalizar Diagnóstico ✓";
+        document.getElementById(`next-${currentStep}`).disabled = false;
+      }
+    }
+
+    document.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        if (document.activeElement.tagName === 'TEXTAREA') return;
+        const nextBtn = document.getElementById(`next-${currentStep}`);
+        if (nextBtn && !nextBtn.disabled) {
+          if (currentStep === questions.length - 1) submitForm();
+          else nextStep();
+        }
+      }
+    });
+
+    renderSteps();
+  </script>
+</body>
+</html>
