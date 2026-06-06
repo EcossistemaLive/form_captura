@@ -373,12 +373,75 @@
       document.getElementById('progressText').innerText = pct + '%';
     }
 
+    // ============================================================
+    // CONFIGURAÇÃO DATACRAZY CRM
+    // ============================================================
+    const DC_CONFIG = {
+      API_KEY: 'dc_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMjQzOWYxOTJkZmZhY2I5NmM2Y2Q0NiIsInRlbmFudElkIjoiMTMyODUzNWItM2E0Yi00ZDY0LTllYzUtYzc3ZjYyOTZmMmE1IiwibmFtZSI6IkNhcHRhw6fDo28gLSBUcsOhZmVnbyIsInJvbGVzIjpbImFkbWluIl0sImlzQWRtaW4iOnRydWUsImlhdCI6MTc4MDc1OTAyNiwiZXhwIjoxNzg4MTQ1MTk5fQ.zCrCLjo8WqauOTvoPKdoZIVrWo2GvfXcRBK3fjflGkg',
+      STAGE_ID: '87af0c61-d406-4751-bb43-a3ca4a6abf68',
+      SOURCE_LABEL: 'LP - Diagnóstico Estratégico',
+      TAG_IDS: []
+    };
+    const DC_BASE_URL = 'https://api.g1.datacrazy.io/api/v1';
+
+    async function dcRequest(endpoint, method, body) {
+      const response = await fetch(`${DC_BASE_URL}${endpoint}`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DC_CONFIG.API_KEY}`
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After') || 60;
+        throw new Error(`RATE_LIMIT:${retryAfter}`);
+      }
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Erro ${response.status}`);
+      }
+
+      const text = await response.text();
+      return text ? JSON.parse(text) : {};
+    }
+
+    async function criarLeadDataCrazy(answers) {
+      const body = {
+        name: answers.nome,
+        email: answers.email || undefined,
+        phone: answers.whatsapp || undefined,
+        source: DC_CONFIG.SOURCE_LABEL,
+        sourceReferral: {
+          sourceUrl: window.location.href
+        }
+      };
+
+      if (DC_CONFIG.TAG_IDS && DC_CONFIG.TAG_IDS.length > 0) {
+        body.tags = DC_CONFIG.TAG_IDS.map(id => ({ id: [id] }));
+      }
+
+      const result = await dcRequest('/leads', 'POST', body);
+      return result.id;
+    }
+
+    async function criarNegocioDataCrazy(leadId) {
+      const body = {
+        leadId,
+        stageId: DC_CONFIG.STAGE_ID
+      };
+      return await dcRequest('/businesses', 'POST', body);
+    }
+
     async function submitForm() {
       document.getElementById(`next-${currentStep}`).innerText = "Enviando...";
       document.getElementById(`next-${currentStep}`).disabled = true;
 
       answers['data_envio'] = new Date().toISOString();
 
+      // 1. Envio para o Webhook do Google Sheets (Fluxo Atual)
       try {
         console.log("Enviando dados do diagnóstico para o webhook:", answers);
 
@@ -393,23 +456,37 @@
           console.log("Modo Sandbox - Respostas:", answers);
           await new Promise(r => setTimeout(r, 1000));
         }
+      } catch (error) {
+        console.error("Erro ao enviar para o Google Sheets:", error);
+      }
 
-        // Dispara o Pixel da Meta para o evento de Lead
+      // 2. Envio para o DataCrazy CRM
+      try {
+        if (DC_CONFIG.API_KEY !== 'SUA_CHAVE_DATACRAZY_AQUI' && DC_CONFIG.STAGE_ID !== 'UUID-DO-ESTAGIO-DO-FUNIL') {
+          console.log("Enviando dados para o DataCrazy CRM...");
+          const leadId = await criarLeadDataCrazy(answers);
+          await criarNegocioDataCrazy(leadId);
+          console.log("Lead e Negócio criados com sucesso no DataCrazy!");
+        } else {
+          console.log("DataCrazy em modo Sandbox (sem credenciais configuradas).");
+        }
+      } catch (error) {
+        console.error("Erro ao enviar para o DataCrazy:", error);
+      }
+
+      // 3. Pixel da Meta e finalização da tela
+      try {
         if (typeof fbq === 'function') {
           fbq('track', 'Lead');
         }
-
-        document.getElementById(`step-${currentStep}`).classList.remove('active');
-        document.getElementById('step-thankyou').classList.add('active');
-        document.getElementById('progressFill').style.width = '100%';
-        document.getElementById('progressText').innerText = '100%';
-
       } catch (error) {
-        console.error("Erro ao enviar:", error);
-        alert("Ocorreu um erro ao enviar. Tente novamente.");
-        document.getElementById(`next-${currentStep}`).innerText = "Finalizar Diagnóstico ✓";
-        document.getElementById(`next-${currentStep}`).disabled = false;
+        console.error("Erro ao disparar Pixel da Meta:", error);
       }
+
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      document.getElementById('step-thankyou').classList.add('active');
+      document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('progressText').innerText = '100%';
     }
 
     document.addEventListener('keypress', function (e) {
