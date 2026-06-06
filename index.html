@@ -435,6 +435,28 @@
       return await dcRequest('/businesses', 'POST', body);
     }
 
+    async function criarNotaDataCrazy(leadId, answers) {
+      let noteText = "📋 RESPOSTAS DO DIAGNÓSTICO:\n\n";
+      questions.forEach(q => {
+        if (q.type === 'contact') {
+          noteText += `👤 Nome: ${answers.nome || 'Não preenchido'}\n`;
+          noteText += `📧 E-mail: ${answers.email || 'Não preenchido'}\n`;
+          noteText += `📞 WhatsApp: ${answers.whatsapp || 'Não preenchido'}\n\n`;
+        } else {
+          const answerVal = answers[q.id];
+          if (answerVal) {
+            noteText += `❓ ${q.title}\n🔹 ${answerVal}\n\n`;
+          }
+        }
+      });
+
+      const body = {
+        note: noteText.trim()
+      };
+
+      return await dcRequest(`/leads/${leadId}/notes`, 'POST', body);
+    }
+
     async function submitForm() {
       document.getElementById(`next-${currentStep}`).innerText = "Enviando...";
       document.getElementById(`next-${currentStep}`).disabled = true;
@@ -466,7 +488,8 @@
           console.log("Enviando dados para o DataCrazy CRM...");
           const leadId = await criarLeadDataCrazy(answers);
           await criarNegocioDataCrazy(leadId);
-          console.log("Lead e Negócio criados com sucesso no DataCrazy!");
+          await criarNotaDataCrazy(leadId, answers);
+          console.log("Lead, Negócio e Nota criados com sucesso no DataCrazy!");
         } else {
           console.log("DataCrazy em modo Sandbox (sem credenciais configuradas).");
         }
