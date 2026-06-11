@@ -251,8 +251,19 @@
     const answers = {};
     const app = document.getElementById('app');
 
-    // Captura automática de parâmetros UTM da URL
-    const urlParams = new URLSearchParams(window.location.search);
+    // Captura automática de parâmetros UTM da URL (trata iframe caso o form esteja embarcado)
+    let searchParams = window.location.search;
+    if (window.self !== window.top && document.referrer) {
+      try {
+        const referrerUrl = new URL(document.referrer);
+        if (referrerUrl.search) {
+          searchParams = referrerUrl.search;
+        }
+      } catch (e) {
+        console.error("Erro ao extrair parâmetros do referrer:", e);
+      }
+    }
+    const urlParams = new URLSearchParams(searchParams);
     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
       answers[utm] = urlParams.get(utm) || '';
     });
@@ -415,13 +426,14 @@
     }
 
     async function criarLeadDataCrazy(answers) {
+      const sourceUrl = (window.self !== window.top && document.referrer) ? document.referrer : window.location.href;
       const body = {
         name: answers.nome,
         email: answers.email || undefined,
         phone: answers.whatsapp || undefined,
         source: DC_CONFIG.SOURCE_LABEL,
         sourceReferral: {
-          sourceUrl: window.location.href
+          sourceUrl: sourceUrl
         }
       };
 
