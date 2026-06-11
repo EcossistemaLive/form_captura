@@ -154,9 +154,17 @@
   </div>
 
   <script>
-    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxYIGDJT-rKL_eN-jozVUl2pPPH3qrqrTk1o8HOA-wyCe7yoCd8gOb2_nX_0wnP669t/exec"; 
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzd-6rkQ0KfngDf-ujkvlzOaX9DkdcL34hRMBFsKMxoPYP_TGEtvUqRic7PNiE1rK9l/exec"; 
 
     const questions = [
+      {
+        id: "contato", type: "contact", title: "Para começar, onde podemos enviar o resultado do seu diagnóstico?",
+        inputs: [
+          { name: "nome", type: "text", placeholder: "Seu nome completo" },
+          { name: "email", type: "email", placeholder: "Seu melhor e-mail" },
+          { name: "whatsapp", type: "tel", placeholder: "Seu WhatsApp" }
+        ]
+      },
       {
         id: "papel", type: "choice", title: "Qual é o seu papel hoje na empresa?",
         options: ["CEO / Sócio principal", "Diretor(a) / C-level", "Gerente / Coordenador(a)", "Outro"]
@@ -236,20 +244,15 @@
       {
         id: "foco_90_dias", type: "text_long", title: "Se você pudesse resolver apenas uma coisa nos próximos 90 dias, que mudaria o jogo para os próximos 3 anos, o que seria?",
         placeholder: "Ex: Tirar minha operação do caos logístico..."
-      },
-      {
-        id: "contato", type: "contact", title: "Para finalizar, onde podemos enviar o resultado do seu diagnóstico?",
-        inputs: [
-          { name: "nome", type: "text", placeholder: "Seu nome completo" },
-          { name: "email", type: "email", placeholder: "Seu melhor e-mail" },
-          { name: "whatsapp", type: "tel", placeholder: "Seu WhatsApp" }
-        ]
       }
     ];
 
     let currentStep = 0;
     const answers = {};
     const app = document.getElementById('app');
+
+    // Inicializa identificador único de submissão
+    answers['submission_id'] = 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
     // Captura automática de parâmetros UTM da URL (trata iframe caso o form esteja embarcado)
     let searchParams = window.location.search;
@@ -365,8 +368,61 @@
       document.getElementById(`next-${stepIndex}`).disabled = !valid;
     }
 
+    let partialSubmitted = false;
+    let createdLeadId = null;
+
+    async function enviarDadosParciais() {
+      if (partialSubmitted) return;
+      partialSubmitted = true;
+      console.log("Iniciando envio parcial dos dados...");
+      
+      // 1. Enviar para o Webhook do Google Sheets
+      try {
+        if (WEBHOOK_URL !== "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI") {
+          fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+              submission_id: answers.submission_id,
+              nome: answers.nome,
+              email: answers.email,
+              whatsapp: answers.whatsapp,
+              utm_source: answers.utm_source,
+              utm_medium: answers.utm_medium,
+              utm_campaign: answers.utm_campaign,
+              utm_term: answers.utm_term,
+              utm_content: answers.utm_content,
+              data_envio: new Date().toISOString(),
+              parcial: true
+            })
+          });
+        }
+      } catch (error) {
+        console.error("Erro no envio parcial Sheets:", error);
+      }
+
+      // 2. Enviar para o DataCrazy CRM
+      try {
+        if (DC_CONFIG.API_KEY !== 'SUA_CHAVE_DATACRAZY_AQUI' && DC_CONFIG.STAGE_ID !== 'UUID-DO-ESTAGIO-DO-FUNIL') {
+          createdLeadId = await criarLeadDataCrazy(answers);
+          await criarNegocioDataCrazy(createdLeadId);
+          console.log("Lead e Negócio criados parcialmente no DataCrazy CRM:", createdLeadId);
+        }
+      } catch (error) {
+        console.error("Erro no envio parcial CRM:", error);
+        partialSubmitted = false; // Permite tentar novamente se falhar
+      }
+    }
+
     function nextStep() {
       if (currentStep >= questions.length - 1) return;
+      
+      // Se estamos saindo da primeira etapa (contato), faz o envio parcial
+      if (currentStep === 0) {
+        enviarDadosParciais();
+      }
+
       document.getElementById(`step-${currentStep}`).classList.remove('active');
       currentStep++;
       document.getElementById(`step-${currentStep}`).classList.add('active');
@@ -516,8 +572,11 @@
       try {
         if (DC_CONFIG.API_KEY !== 'SUA_CHAVE_DATACRAZY_AQUI' && DC_CONFIG.STAGE_ID !== 'UUID-DO-ESTAGIO-DO-FUNIL') {
           console.log("Enviando dados para o DataCrazy CRM...");
-          const leadId = await criarLeadDataCrazy(answers);
-          await criarNegocioDataCrazy(leadId);
+          let leadId = createdLeadId;
+          if (!leadId) {
+            leadId = await criarLeadDataCrazy(answers);
+            await criarNegocioDataCrazy(leadId);
+          }
           await criarNotaDataCrazy(leadId, answers);
           console.log("Lead, Negócio e Nota criados com sucesso no DataCrazy!");
         } else {
