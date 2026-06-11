@@ -154,7 +154,7 @@
   </div>
 
   <script>
-    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxKZmJR68bG_2ij2acYM9AMv0mhQlqkt6RuCXuDCYLJG19HjkBtjHj354RPJsL1AJlR/exec"; 
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxYIGDJT-rKL_eN-jozVUl2pPPH3qrqrTk1o8HOA-wyCe7yoCd8gOb2_nX_0wnP669t/exec"; 
 
     const questions = [
       {
@@ -250,6 +250,12 @@
     let currentStep = 0;
     const answers = {};
     const app = document.getElementById('app');
+
+    // Captura automática de parâmetros UTM da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
+      answers[utm] = urlParams.get(utm) || '';
+    });
 
     function renderSteps() {
       app.innerHTML = '';
@@ -437,6 +443,18 @@
 
     async function criarNotaDataCrazy(leadId, answers) {
       let noteText = "📋 RESPOSTAS DO DIAGNÓSTICO:\n\n";
+      
+      // Adiciona informações de UTM se estiverem presentes
+      let utmText = "";
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
+        if (answers[utm]) {
+          utmText += `🔸 ${utm}: ${answers[utm]}\n`;
+        }
+      });
+      if (utmText) {
+        noteText += `📍 ORIGEM DO LEAD (UTMs):\n${utmText}\n`;
+      }
+
       questions.forEach(q => {
         if (q.type === 'contact') {
           noteText += `👤 Nome: ${answers.nome || 'Não preenchido'}\n`;
