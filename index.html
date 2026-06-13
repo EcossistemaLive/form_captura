@@ -223,27 +223,6 @@
           "Não enxergo com nitidez qual é o problema central",
           "Enxergo o problema, mas o time não acompanha"
         ]
-      },
-      {
-        id: "tempo", type: "choice", title: "Quanto tempo você está disposto a dedicar para alcançar a solução nas próximas 8 semanas?",
-        options: [
-          "1 dia inteiro, presencial, fora da rotina",
-          "Encontros periódicos, online ou híbridos",
-          "Algumas horas por semana, contanto que seja direto ao ponto",
-          "Ainda não sei, preciso entender melhor o que faz sentido"
-        ]
-      },
-      {
-        id: "ambiente", type: "choice", title: "Que tipo de ambiente tende a gerar mais resultado para você?",
-        options: [
-          "Uma sala com pares (outros CEOs/Diretores em nível semelhante)",
-          "Trabalho direto, 1:1, com quem já resolveu o que eu vivo hoje",
-          "Uma formação estruturada para eu desenvolver meu time de liderança"
-        ]
-      },
-      {
-        id: "foco_90_dias", type: "text_long", title: "Se você pudesse resolver apenas uma coisa nos próximos 90 dias, que mudaria o jogo para os próximos 3 anos, o que seria?",
-        placeholder: "Ex: Tirar minha operação do caos logístico..."
       }
     ];
 
@@ -279,7 +258,7 @@
         stepDiv.className = `step-container ${index === 0 ? 'active' : ''}`;
         stepDiv.id = `step-${index}`;
 
-        let contentHTML = `<div class="question-block"><span class="q-num">${index + 1} &rarr;</span> ${q.title}</div>`;
+        let contentHTML = `<div class="question-block">${q.title}</div>`;
 
         if (q.type === 'choice') {
           contentHTML += `<div class="options-grid">`;
