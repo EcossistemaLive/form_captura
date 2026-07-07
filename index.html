@@ -465,31 +465,29 @@
     }
 
     async function criarNotaDataCrazy(leadId, answers) {
-      let noteText = "📋 RESPOSTAS DO DIAGNí“STICO:\n\n";
-      
-      // Adiciona informações de UTM se estiverem presentes
-      let utmText = "";
-      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
-        if (answers[utm]) {
-          utmText += `🔸 ${utm}: ${answers[utm]}\n`;
-        }
-      });
-      if (utmText) {
-        noteText += `ðŸ“ ORIGEM DO LEAD (UTMs):\n${utmText}\n`;
-      }
+      let noteText = "== RESPOSTAS DO DIAGNOSTICO ==\n\n";
 
+      // Adiciona contato
+      noteText += `Nome: ${answers.nome || 'Nao preenchido'}\n`;
+      noteText += `E-mail: ${answers.email || 'Nao preenchido'}\n`;
+      noteText += `WhatsApp: ${answers.whatsapp || 'Nao preenchido'}\n\n`;
+
+      // Adiciona respostas das perguntas
       questions.forEach(q => {
-        if (q.type === 'contact') {
-          noteText += `👤 Nome: ${answers.nome || 'Não preenchido'}\n`;
-          noteText += `📧 E-mail: ${answers.email || 'Não preenchido'}\n`;
-          noteText += `📞 WhatsApp: ${answers.whatsapp || 'Não preenchido'}\n\n`;
-        } else {
+        if (q.type !== 'contact') {
           const answerVal = answers[q.id];
           if (answerVal) {
-            noteText += `â“ ${q.title}\n🔹 ${answerVal}\n\n`;
+            noteText += `[${q.id.toUpperCase()}] ${q.title}\n>> ${answerVal}\n\n`;
           }
         }
       });
+
+      // Adiciona informacoes de UTM se presentes
+      const utms = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].filter(u => answers[u]);
+      if (utms.length > 0) {
+        noteText += "== ORIGEM (UTMs) ==\n";
+        utms.forEach(utm => { noteText += `${utm}: ${answers[utm]}\n`; });
+      }
 
       const body = {
         note: noteText.trim()
