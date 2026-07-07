@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DiagnÃ³stico EstratÃ©gico | ViDi</title>
+  <title>Diagnóstico Estratégico | ViDi</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -151,7 +151,7 @@
   </header>
 
   <div id="app">
-    <!-- Pasos serÃ£o gerados dinamicamente via JS -->
+    <!-- Pasos serão gerados dinamicamente via JS -->
   </div>
 
   <script>
@@ -206,10 +206,10 @@
     const answers = {};
     const app = document.getElementById('app');
 
-    // Inicializa identificador Ãºnico de submissÃ£o
+    // Inicializa identificador único de submissão
     answers['submission_id'] = 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-    // Captura automÃ¡tica de parÃ¢metros UTM da URL (trata iframe caso o form esteja embarcado)
+    // Captura automática de parâmetros UTM da URL (trata iframe caso o form esteja embarcado)
     let searchParams = window.location.search;
     if (window.self !== window.top && document.referrer) {
       try {
@@ -218,7 +218,7 @@
           searchParams = referrerUrl.search;
         }
       } catch (e) {
-        console.error("Erro ao extrair parÃ¢metros do referrer:", e);
+        console.error("Erro ao extrair parâmetros do referrer:", e);
       }
     }
     const urlParams = new URLSearchParams(searchParams);
@@ -261,13 +261,13 @@
         // Navigation
         contentHTML += `<div class="nav-buttons">`;
         if (index === questions.length - 1) {
-          contentHTML += `<button class="btn-submit" id="next-${index}" disabled onclick="submitForm()">Finalizar DiagnÃ³stico âœ“</button>`;
+          contentHTML += `<button class="btn-submit" id="next-${index}" disabled onclick="submitForm()">Finalizar Diagnóstico ✓</button>`;
         } else {
-          contentHTML += `<button class="btn-next" id="next-${index}" disabled onclick="nextStep()">OK âœ“</button>`;
-          contentHTML += `<div class="nav-hint">Pressione Enter â†µ</div>`;
+          contentHTML += `<button class="btn-next" id="next-${index}" disabled onclick="nextStep()">OK ✓</button>`;
+          contentHTML += `<div class="nav-hint">Pressione Enter ↵</div>`;
         }
         if (index > 0) {
-          contentHTML += `<button class="btn-prev" onclick="prevStep()">â†‘ Voltar</button>`;
+          contentHTML += `<button class="btn-prev" onclick="prevStep()">↑ Voltar</button>`;
         }
         contentHTML += `</div>`;
 
@@ -282,8 +282,8 @@
       tyDiv.innerHTML = `
         <div class="thank-you">
           <h2>Tudo pronto!</h2>
-          <p>Seus dados foram recebidos. Nossa equipe estratÃ©gica vai analisar o seu perfil e entraremos em contato em breve com o diagnÃ³stico.</p>
-          <a href="#" onclick="location.reload(); return false;" class="btn-next" style="text-decoration:none;">Voltar para o inÃ­cio</a>
+          <p>Seus dados foram recebidos. Nossa equipe estratégica vai analisar o seu perfil e entraremos em contato em breve com o diagnóstico.</p>
+          <a href="#" onclick="location.reload(); return false;" class="btn-next" style="text-decoration:none;">Voltar para o início</a>
         </div>
       `;
       app.appendChild(tyDiv);
@@ -362,7 +362,7 @@
         if (DC_CONFIG.API_KEY !== 'SUA_CHAVE_DATACRAZY_AQUI' && DC_CONFIG.STAGE_ID !== 'UUID-DO-ESTAGIO-DO-FUNIL') {
           createdLeadId = await criarLeadDataCrazy(answers);
           await criarNegocioDataCrazy(createdLeadId);
-          console.log("Lead e NegÃ³cio criados parcialmente no DataCrazy CRM:", createdLeadId);
+          console.log("Lead e Negócio criados parcialmente no DataCrazy CRM:", createdLeadId);
         }
       } catch (error) {
         console.error("Erro no envio parcial CRM:", error);
@@ -402,12 +402,12 @@
     }
 
     // ============================================================
-    // CONFIGURAÃ‡ÃƒO DATACRAZY CRM
+    // CONFIGURAí‡íƒO DATACRAZY CRM
     // ============================================================
     const DC_CONFIG = {
       API_KEY: 'dc_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMjQzOWYxOTJkZmZhY2I5NmM2Y2Q0NiIsInRlbmFudElkIjoiMTMyODUzNWItM2E0Yi00ZDY0LTllYzUtYzc3ZjYyOTZmMmE1IiwibmFtZSI6IkNhcHRhw6fDo28gLSBUcsOhZmVnbyIsInJvbGVzIjpbImFkbWluIl0sImlzQWRtaW4iOnRydWUsImlhdCI6MTc4MDc1OTAyNiwiZXhwIjoxNzg4MTQ1MTk5fQ.zCrCLjo8WqauOTvoPKdoZIVrWo2GvfXcRBK3fjflGkg',
       STAGE_ID: '87af0c61-d406-4751-bb43-a3ca4a6abf68',
-      SOURCE_LABEL: 'LP - DiagnÃ³stico EstratÃ©gico',
+      SOURCE_LABEL: 'LP - Diagnóstico Estratégico',
       TAG_IDS: []
     };
     const DC_BASE_URL = 'https://api.g1.datacrazy.io/api/v1';
@@ -465,13 +465,13 @@
     }
 
     async function criarNotaDataCrazy(leadId, answers) {
-      let noteText = "ðŸ“‹ RESPOSTAS DO DIAGNÃ“STICO:\n\n";
+      let noteText = "📋 RESPOSTAS DO DIAGNí“STICO:\n\n";
       
-      // Adiciona informaÃ§Ãµes de UTM se estiverem presentes
+      // Adiciona informações de UTM se estiverem presentes
       let utmText = "";
       ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
         if (answers[utm]) {
-          utmText += `ðŸ”¸ ${utm}: ${answers[utm]}\n`;
+          utmText += `🔸 ${utm}: ${answers[utm]}\n`;
         }
       });
       if (utmText) {
@@ -480,13 +480,13 @@
 
       questions.forEach(q => {
         if (q.type === 'contact') {
-          noteText += `ðŸ‘¤ Nome: ${answers.nome || 'NÃ£o preenchido'}\n`;
-          noteText += `ðŸ“§ E-mail: ${answers.email || 'NÃ£o preenchido'}\n`;
-          noteText += `ðŸ“ž WhatsApp: ${answers.whatsapp || 'NÃ£o preenchido'}\n\n`;
+          noteText += `👤 Nome: ${answers.nome || 'Não preenchido'}\n`;
+          noteText += `📧 E-mail: ${answers.email || 'Não preenchido'}\n`;
+          noteText += `📞 WhatsApp: ${answers.whatsapp || 'Não preenchido'}\n\n`;
         } else {
           const answerVal = answers[q.id];
           if (answerVal) {
-            noteText += `â“ ${q.title}\nðŸ”¹ ${answerVal}\n\n`;
+            noteText += `â“ ${q.title}\n🔹 ${answerVal}\n\n`;
           }
         }
       });
@@ -506,7 +506,7 @@
 
       // 1. Envio para o Webhook do Google Sheets (Fluxo Atual)
       try {
-        console.log("Enviando dados do diagnÃ³stico para o webhook:", answers);
+        console.log("Enviando dados do diagnóstico para o webhook:", answers);
 
         if (WEBHOOK_URL !== "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI") {
           await fetch(WEBHOOK_URL, {
@@ -533,7 +533,7 @@
             await criarNegocioDataCrazy(leadId);
           }
           await criarNotaDataCrazy(leadId, answers);
-          console.log("Lead, NegÃ³cio e Nota criados com sucesso no DataCrazy!");
+          console.log("Lead, Negócio e Nota criados com sucesso no DataCrazy!");
         } else {
           console.log("DataCrazy em modo Sandbox (sem credenciais configuradas).");
         }
@@ -541,7 +541,7 @@
         console.error("Erro ao enviar para o DataCrazy:", error);
       }
 
-      // 3. Pixel da Meta e finalizaÃ§Ã£o da tela
+      // 3. Pixel da Meta e finalização da tela
       try {
         if (typeof fbq === 'function') {
           fbq('track', 'Lead');
