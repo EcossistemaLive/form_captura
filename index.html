@@ -155,11 +155,11 @@
   </div>
 
   <script>
-    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxUmmbrZQoNX5gT7PI_qm8tpLyirGh-VsyTjLUmK6kzZqdHIKkmoKkpWO7nXqkkitNv/exec"; 
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwu4-nzX4Y8b9kVeg2WD-FWD_PFqmKhoxHuXlkX0XiclnPGPLmWtErNBUlMI8u2fnBA/exec"; 
 
     const questions = [
       {
-        id: "contato", type: "contact", title: "Para comeÃ§ar, onde podemos enviar o resultado do seu diagnÃ³stico?",
+        id: "contato", type: "contact", title: "Para começar, onde podemos enviar o resultado do seu diagnóstico?",
         inputs: [
           { name: "nome", type: "text", placeholder: "Seu nome completo" },
           { name: "email", type: "email", placeholder: "Seu melhor e-mail" },
@@ -167,62 +167,37 @@
         ]
       },
       {
-        id: "papel", type: "choice", title: "Qual Ã© o seu papel hoje na empresa?",
-        options: ["CEO / SÃ³cio principal", "Diretor(a) / C-level", "Gerente / Coordenador(a)", "Outro"]
+        id: "papel", type: "choice", title: "Qual é o seu papel hoje na empresa?",
+        options: ["CEO / Diretor", "Gerente", "Outro"]
       },
       {
-        id: "decisoes", type: "choice", title: "VocÃª participa diretamente das decisÃµes estratÃ©gicas de mÃ©dio e longo prazo?",
-        options: ["Sim, sou um dos principais responsÃ¡veis", "Participo, mas nÃ£o sou a palavra final", "Quase nÃ£o participo"]
+        id: "objetivo", type: "choice", title: "Você está buscando algo para você, para o seu time ou para a empresa como um todo?",
+        options: ["Para mim, como líder", "Para o meu time de liderança", "Para a empresa como um todo"]
       },
       {
-        id: "foco_busca", type: "choice", title: "VocÃª estÃ¡ buscando algo para:",
-        options: ["VocÃª, como lÃ­der", "Seu time de lideranÃ§a", "A empresa como um todo"]
+        id: "faturamento", type: "choice", title: "Qual o faturamento mensal aproximado da sua empresa?",
+        options: ["100 a 500 mil", "500 mil a 1 milhão", "1 a 2,5 milhões", "2,5 a 5 milhões", "Acima de 5 milhões"]
       },
       {
-        id: "faturamento", type: "choice", title: "Qual foi o faturamento anual aproximado da empresa no Ãºltimo ano?",
-        options: ["AtÃ© R$ 5 milhÃµes", "Entre R$ 5M e R$ 10M", "Entre R$ 10M e R$ 50M", "Acima de R$ 50M", "Prefiro nÃ£o dizer"]
+        id: "colaboradores", type: "choice", title: "Quantos colaboradores a empresa tem no total?",
+        options: ["Até 10", "De 11 a 50", "De 51 a 200", "Mais de 200"]
       },
       {
-        id: "liderados", type: "choice", title: "Quantas pessoas estÃ£o sob sua lideranÃ§a direta ou indireta?",
-        options: ["AtÃ© 5", "De 6 a 20", "De 21 a 100", "Mais de 100"]
-      },
-      {
-        id: "gargalo", type: "choice", title: "Se vocÃª tivesse que nomear o principal gargalo hoje, qual alternativa estÃ¡ mais perto da verdade?",
+        id: "momento_atual", type: "choice", title: "Qual dessas frases descreve melhor o seu momento atual na empresa?",
         options: [
-          "A empresa depende demais de mim em quase tudo",
-          "Meu time nÃ£o sustenta pressÃ£o/crise sem mim",
-          "Falta mÃ©todo para decidir o que fazer nos prÃ³ximos 12-24 meses",
-          "Processos e operaÃ§Ã£o nÃ£o acompanham o crescimento",
-          "Conflitos societÃ¡rios / desalinhamento no topo",
-          "Outro"
+          "Sei que preciso sair da operação, mas não sei por onde começar",
+          "Preciso que meus líderes cresçam para a empresa escalar",
+          "Preciso colocar ordem na casa: processos, metas e times",
+          "Quero revisitar a estratégia para um próximo ciclo (expansão, exit, etc.)"
         ]
       },
       {
-        id: "situacao_atual", type: "choice", title: "Qual dessas frases descreve melhor o seu momento atual na empresa?",
+        id: "disponibilidade_presencial", type: "choice", title: "O evento acontecerá presencialmente em Brasília. Como é a sua disponibilidade para estar conosco?",
         options: [
-          "Sei que preciso sair da operaÃ§Ã£o, mas nÃ£o sei por onde comeÃ§ar",
-          "Preciso que meus lÃ­deres cresÃ§am para a empresa escalar",
-          "Quero revisitar a estratÃ©gia para o prÃ³ximo ciclo (expansÃ£o, exit...)",
-          "Preciso colocar ordem na casa: processos, metas, times",
-          "Ainda nÃ£o tenho clareza suficiente nem para responder isso"
-        ]
-      },
-      {
-        id: "marco", type: "choice", title: "Existe algum marco concreto Ã  frente que aumenta a pressÃ£o sobre essas decisÃµes?",
-        options: [
-          "PossÃ­vel venda da empresa / entrada de investidor",
-          "Entrada de novo sÃ³cio / sucessÃ£o familiar",
-          "ExpansÃ£o para novas unidades / regiÃµes / paÃ­ses",
-          "ReestruturaÃ§Ã£o (cortes, fusÃ£o, reorganizaÃ§Ã£o interna)",
-          "NÃ£o hÃ¡ marco especÃ­fico, mas a estagnaÃ§Ã£o incomoda"
-        ]
-      },
-      {
-        id: "reconhecimento", type: "choice", title: "Qual dessas alternativas Ã© o maior obstÃ¡culo atual?",
-        options: [
-          "Tenho clareza do problema, mas nÃ£o consigo executar sozinho",
-          "NÃ£o enxergo com nitidez qual Ã© o problema central",
-          "Enxergo o problema, mas o time nÃ£o acompanha"
+          "Moro em Brasília ou região e tenho total disponibilidade",
+          "Sou de fora, mas me organizo para estar presente com antecedência",
+          "Gostaria de ir, mas a logística até Brasília hoje é um impedimento",
+          "Prefiro eventos ou mentorias 100% online"
         ]
       }
     ];
