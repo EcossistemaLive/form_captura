@@ -398,6 +398,42 @@
       answers['parcial'] = false;
       // submission_id já está no objeto answers
 
+      // --- INTEGRAÇÃO DATACRAZY ---
+      const DC_CONFIG = {
+        API_KEY: 'dc_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMjQzOWYxOTJkZmZhY2I5NmM2Y2Q0NiIsInRlbmFudElkIjoiMTMyODUzNWItM2E0Yi00ZDY0LTllYzUtYzc3ZjYyOTZmMmE1IiwibmFtZSI6IkNhcHRhw6fDo28gLSBUcsOhZmVnbyIsInJvbGVzIjpbImFkbWluIl0sImlzQWRtaW4iOnRydWUsImlhdCI6MTc4MDc1OTAyNiwiZXhwIjoxNzg4MTQ1MTk5fQ.zCrCLjo8WqauOTvoPKdoZIVrWo2GvfXcRBK3fjflGkg',
+        STAGE_ID: '87af0c61-d406-4751-bb43-a3ca4a6abf68',
+        SOURCE_LABEL: 'LP - Diagnóstico Estratégico',
+        TAG_IDS: []
+      };
+
+      async function dcRequest(endpoint, method, body = null) {
+        if (!DC_CONFIG.API_KEY || DC_CONFIG.API_KEY === 'SUA_CHAVE_DATACRAZY_AQUI') return null;
+        const url = `https://api.g1.datacrazy.io/api/v1${endpoint}`;
+        const options = {
+          method: method,
+          headers: {
+            'Authorization': `Bearer ${DC_CONFIG.API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        };
+        if (body) options.body = JSON.stringify(body);
+        
+        try {
+          const res = await fetch(url, options);
+          if (res.status >= 200 && res.status < 300) {
+            const text = await res.text();
+            return text ? JSON.parse(text) : { success: true };
+          } else {
+            const err = await res.text();
+            console.error(`DataCrazy Error (${res.status}):`, err);
+            return null;
+          }
+        } catch (e) {
+          console.error('DataCrazy Fetch Error:', e);
+          return null;
+        }
+      }
+
       // 1. Envio para o Webhook do Google Sheets (Fluxo Atual)
       try {
         console.log("Enviando dados do diagnóstico para o webhook:", answers);
@@ -409,15 +445,79 @@
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(answers)
           });
-        } else {
-          console.log("Modo Sandbox - Respostas:", answers);
-          await new Promise(r => setTimeout(r, 1000));
         }
       } catch (error) {
         console.error("Erro ao enviar para o Google Sheets:", error);
       }
 
-      // 2. Pixel da Meta e finalização da tela
+      // 2. Integração DataCrazy
+      try {
+        console.log("Iniciando envio para DataCrazy CRM...");
+        const leadBody = {
+          name: answers.nome || 'Lead Sem Nome',
+          email: answers.email,
+          phone: answers.whatsapp ? answers.whatsapp.replace(/\D/g, '') : '',
+          source: DC_CONFIG.SOURCE_LABEL,
+          sourceReferral: { sourceUrl: window.location.href },
+          tags: DC_CONFIG.TAG_IDS
+        };
+        
+        let leadId = null;
+        const leadRes = await dcRequest('/leads', 'POST', leadBody);
+        
+        if (leadRes && leadRes.id) {
+          console.log("Lead criado com sucesso no DataCrazy:", leadRes.id);
+          leadId = leadRes.id;
+        } else {
+          console.log("Tentando buscar Lead existente (já cadastrado)...");
+          const searchRes = await dcRequest('/leads?q=' + encodeURIComponent(answers.email), 'GET');
+          if (searchRes && searchRes.data && searchRes.data.length > 0) {
+            for (let i = 0; i < searchRes.data.length; i++) {
+              if (searchRes.data[i].email && searchRes.data[i].email.toLowerCase() === answers.email.toLowerCase()) {
+                leadId = searchRes.data[i].id;
+                console.log("Lead existente encontrado:", leadId);
+                break;
+              }
+            }
+          }
+        }
+        
+        if (leadId) {
+          // Cria o negócio
+          const busBody = {
+            leadId: leadId,
+            stageId: DC_CONFIG.STAGE_ID
+          };
+          await dcRequest('/businesses', 'POST', busBody);
+          console.log("Negócio criado no DataCrazy.");
+          
+          // Cria a nota com as respostas
+          let noteText = "== RESPOSTAS DO DIAGNÓSTICO ==\n\n";
+          const perguntas = {
+            'nivel_faturamento': 'Faturamento Atual',
+            'investimento_marketing': 'Já investe em Marketing',
+            'desafio_marketing': 'Maior Desafio',
+            'maior_desafio': 'Maior Desafio',
+            'disponibilidade_presencial': 'Disponibilidade para Reunião Presencial',
+            'cidade': 'Cidade/Região',
+            'ramo_atuacao': 'Ramo de Atuação'
+          };
+          for (const [key, label] of Object.entries(perguntas)) {
+            if (answers[key]) {
+              noteText += `[${label.toUpperCase()}]\n>> ${answers[key]}\n\n`;
+            }
+          }
+          const noteBody = { note: noteText };
+          await dcRequest('/leads/' + leadId + '/notes', 'POST', noteBody);
+          console.log("Nota criada no DataCrazy.");
+        } else {
+          console.error("Erro: Não foi possível criar ou encontrar o Lead no CRM.");
+        }
+      } catch (error) {
+        console.error("Erro na integração com DataCrazy:", error);
+      }
+
+      // 3. Pixel da Meta e finalização da tela
       try {
         if (typeof fbq === 'function') {
           fbq('track', 'Lead');
