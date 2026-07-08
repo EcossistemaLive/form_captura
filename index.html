@@ -324,7 +324,6 @@
     }
 
     let partialSubmitted = false;
-    let createdLeadId = null;
 
     async function enviarDadosParciais() {
       if (partialSubmitted) return;
@@ -355,18 +354,6 @@
         }
       } catch (error) {
         console.error("Erro no envio parcial Sheets:", error);
-      }
-
-      // 2. Enviar para o DataCrazy CRM
-      try {
-        if (DC_CONFIG.API_KEY !== 'SUA_CHAVE_DATACRAZY_AQUI' && DC_CONFIG.STAGE_ID !== 'UUID-DO-ESTAGIO-DO-FUNIL') {
-          createdLeadId = await criarLeadDataCrazy(answers);
-          await criarNegocioDataCrazy(createdLeadId);
-          console.log("Lead e Negócio criados parcialmente no DataCrazy CRM:", createdLeadId);
-        }
-      } catch (error) {
-        console.error("Erro no envio parcial CRM:", error);
-        partialSubmitted = false; // Permite tentar novamente se falhar
       }
     }
 
@@ -401,101 +388,6 @@
       document.getElementById('progressText').innerText = pct + '%';
     }
 
-    // ============================================================
-    // CONFIGURAí‡íƒO DATACRAZY CRM
-    // ============================================================
-    const DC_CONFIG = {
-      API_KEY: 'dc_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMjQzOWYxOTJkZmZhY2I5NmM2Y2Q0NiIsInRlbmFudElkIjoiMTMyODUzNWItM2E0Yi00ZDY0LTllYzUtYzc3ZjYyOTZmMmE1IiwibmFtZSI6IkNhcHRhw6fDo28gLSBUcsOhZmVnbyIsInJvbGVzIjpbImFkbWluIl0sImlzQWRtaW4iOnRydWUsImlhdCI6MTc4MDc1OTAyNiwiZXhwIjoxNzg4MTQ1MTk5fQ.zCrCLjo8WqauOTvoPKdoZIVrWo2GvfXcRBK3fjflGkg',
-      STAGE_ID: '87af0c61-d406-4751-bb43-a3ca4a6abf68',
-      SOURCE_LABEL: 'LP - Diagnóstico Estratégico',
-      TAG_IDS: []
-    };
-    const DC_BASE_URL = 'https://api.g1.datacrazy.io/api/v1';
-
-    async function dcRequest(endpoint, method, body) {
-      const response = await fetch(`${DC_BASE_URL}${endpoint}`, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DC_CONFIG.API_KEY}`
-        },
-        body: body ? JSON.stringify(body) : undefined
-      });
-
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('Retry-After') || 60;
-        throw new Error(`RATE_LIMIT:${retryAfter}`);
-      }
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || `Erro ${response.status}`);
-      }
-
-      const text = await response.text();
-      return text ? JSON.parse(text) : {};
-    }
-
-    async function criarLeadDataCrazy(answers) {
-      const sourceUrl = (window.self !== window.top && document.referrer) ? document.referrer : window.location.href;
-      const body = {
-        name: answers.nome,
-        email: answers.email || undefined,
-        phone: answers.whatsapp || undefined,
-        source: DC_CONFIG.SOURCE_LABEL,
-        sourceReferral: {
-          sourceUrl: sourceUrl
-        }
-      };
-
-      if (DC_CONFIG.TAG_IDS && DC_CONFIG.TAG_IDS.length > 0) {
-        body.tags = DC_CONFIG.TAG_IDS.map(id => ({ id: [id] }));
-      }
-
-      const result = await dcRequest('/leads', 'POST', body);
-      return result.id;
-    }
-
-    async function criarNegocioDataCrazy(leadId) {
-      const body = {
-        leadId,
-        stageId: DC_CONFIG.STAGE_ID
-      };
-      return await dcRequest('/businesses', 'POST', body);
-    }
-
-    async function criarNotaDataCrazy(leadId, answers) {
-      let noteText = "== RESPOSTAS DO DIAGNOSTICO ==\n\n";
-
-      // Adiciona contato
-      noteText += `Nome: ${answers.nome || 'Nao preenchido'}\n`;
-      noteText += `E-mail: ${answers.email || 'Nao preenchido'}\n`;
-      noteText += `WhatsApp: ${answers.whatsapp || 'Nao preenchido'}\n\n`;
-
-      // Adiciona respostas das perguntas
-      questions.forEach(q => {
-        if (q.type !== 'contact') {
-          const answerVal = answers[q.id];
-          if (answerVal) {
-            noteText += `[${q.id.toUpperCase()}] ${q.title}\n>> ${answerVal}\n\n`;
-          }
-        }
-      });
-
-      // Adiciona informacoes de UTM se presentes
-      const utms = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].filter(u => answers[u]);
-      if (utms.length > 0) {
-        noteText += "== ORIGEM (UTMs) ==\n";
-        utms.forEach(utm => { noteText += `${utm}: ${answers[utm]}\n`; });
-      }
-
-      const body = {
-        note: noteText.trim()
-      };
-
-      return await dcRequest(`/leads/${leadId}/notes`, 'POST', body);
-    }
-
     async function submitForm() {
       document.getElementById(`next-${currentStep}`).innerText = "Enviando...";
       document.getElementById(`next-${currentStep}`).disabled = true;
@@ -521,25 +413,7 @@
         console.error("Erro ao enviar para o Google Sheets:", error);
       }
 
-      // 2. Envio para o DataCrazy CRM
-      try {
-        if (DC_CONFIG.API_KEY !== 'SUA_CHAVE_DATACRAZY_AQUI' && DC_CONFIG.STAGE_ID !== 'UUID-DO-ESTAGIO-DO-FUNIL') {
-          console.log("Enviando dados para o DataCrazy CRM...");
-          let leadId = createdLeadId;
-          if (!leadId) {
-            leadId = await criarLeadDataCrazy(answers);
-            await criarNegocioDataCrazy(leadId);
-          }
-          await criarNotaDataCrazy(leadId, answers);
-          console.log("Lead, Negócio e Nota criados com sucesso no DataCrazy!");
-        } else {
-          console.log("DataCrazy em modo Sandbox (sem credenciais configuradas).");
-        }
-      } catch (error) {
-        console.error("Erro ao enviar para o DataCrazy:", error);
-      }
-
-      // 3. Pixel da Meta e finalização da tela
+      // 2. Pixel da Meta e finalização da tela
       try {
         if (typeof fbq === 'function') {
           fbq('track', 'Lead');
