@@ -384,7 +384,8 @@
     }
 
     function updateProgress() {
-      const pct = Math.round((currentStep / questions.length) * 100);
+      let pct = Math.round((currentStep / (questions.length - 1)) * 100);
+      if (pct > 100) pct = 100;
       document.getElementById('progressFill').style.width = pct + '%';
       document.getElementById('progressText').innerText = pct + '%';
     }
@@ -394,8 +395,8 @@
       document.getElementById(`next-${currentStep}`).disabled = true;
 
       answers['data_envio'] = new Date().toISOString();
-      answers['submission_id'] = currentSubmissionId;
       answers['parcial'] = false;
+      // submission_id já está no objeto answers
 
       // 1. Envio para o Webhook do Google Sheets (Fluxo Atual)
       try {
