@@ -390,7 +390,12 @@
       document.getElementById('progressText').innerText = pct + '%';
     }
 
+    let isSubmitting = false;
+
     async function submitForm() {
+      if (isSubmitting) return;
+      isSubmitting = true;
+
       document.getElementById(`next-${currentStep}`).innerText = "Enviando...";
       document.getElementById(`next-${currentStep}`).disabled = true;
 
