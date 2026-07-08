@@ -403,7 +403,7 @@
         console.log("Enviando dados do diagnóstico para o webhook:", answers);
 
         if (WEBHOOK_URL !== "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI") {
-          await fetch(WEBHOOK_URL, {
+          fetch(WEBHOOK_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
