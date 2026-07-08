@@ -494,13 +494,12 @@
           // Cria a nota com as respostas
           let noteText = "== RESPOSTAS DO DIAGNÓSTICO ==\n\n";
           const perguntas = {
-            'nivel_faturamento': 'Faturamento Atual',
-            'investimento_marketing': 'Já investe em Marketing',
-            'desafio_marketing': 'Maior Desafio',
-            'maior_desafio': 'Maior Desafio',
-            'disponibilidade_presencial': 'Disponibilidade para Reunião Presencial',
-            'cidade': 'Cidade/Região',
-            'ramo_atuacao': 'Ramo de Atuação'
+            'papel': 'Papel na Empresa',
+            'objetivo': 'Objetivo',
+            'faturamento': 'Faturamento Mensal',
+            'colaboradores': 'Número de Colaboradores',
+            'momento_atual': 'Momento Atual da Empresa',
+            'disponibilidade_presencial': 'Disponibilidade Presencial (Brasília)'
           };
           for (const [key, label] of Object.entries(perguntas)) {
             if (answers[key]) {
